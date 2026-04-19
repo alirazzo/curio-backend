@@ -9,7 +9,7 @@ const app = express();
 
 // ─── RSS Parser ────────────────────────────────────────────────────────────────
 const parser = new RSSParser({
-  timeout: 4000,
+  timeout: 3000,
   headers: { 'User-Agent': 'Curio/1.0 RSS Reader' },
   customFields: {
     item: [
@@ -188,22 +188,42 @@ async function fetchSources(sourceList, limit) {
 // ─── Routes ────────────────────────────────────────────────────────────────────
 
 // GET /api/feed?category=all&limit=50
-// Returns learning content cards
+// Returns learning content — guaranteed mix across all categories when category=all
 app.get('/api/feed', async (req, res) => {
   try {
     const category = req.query.category || 'all';
     const limit    = Math.min(parseInt(req.query.limit) || 50, 100);
 
-    const learnSources = SOURCES.filter(s =>
-      s.type === 'learn' &&
-      (category === 'all' || s.category === category)
-    );
+    let selected;
 
-    if (!learnSources.length) {
-      return res.status(400).json({ error: `Unknown category: ${category}` });
+    if (category === 'all') {
+      // Pick 1–2 sources from EACH category to guarantee variety
+      const byCategory = {};
+      SOURCES.filter(s => s.type === 'learn').forEach(s => {
+        if (!byCategory[s.category]) byCategory[s.category] = [];
+        byCategory[s.category].push(s);
+      });
+      selected = Object.values(byCategory).flatMap(sources =>
+        shuffle(sources).slice(0, 2)
+      );
+      selected = shuffle(selected);
+    } else {
+      const pool = SOURCES.filter(s => s.type === 'learn' && s.category === category);
+      if (!pool.length) return res.status(400).json({ error: `Unknown category: ${category}` });
+      selected = shuffle(pool).slice(0, 8);
     }
 
-    const items = await fetchSources(learnSources, limit);
+    const results = await Promise.allSettled(selected.map(s => fetchFeed(s)));
+    const all = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
+
+    const seen = new Set();
+    const deduped = all.filter(c => {
+      if (seen.has(c.url)) return false;
+      seen.add(c.url);
+      return true;
+    });
+
+    const items = shuffle(deduped).slice(0, limit);
     res.json({ items, count: items.length, category });
   } catch (err) {
     console.error('[/api/feed]', err);
@@ -212,40 +232,17 @@ app.get('/api/feed', async (req, res) => {
 });
 
 // GET /api/news?limit=30
-// Returns news cards with bias/reliability data
+// Returns news cards — fast 5-source fetch with 3s timeout
 app.get('/api/news', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 30, 60);
 
-    // Only use high-reliability news sources (≥82) to keep response fast
-    // Priority sources always included; rest sampled randomly
-    const PRIORITY_IDS = [
-      'ap_news', 'reuters', 'bbc_news', 'guardian_world', 'npr_news',
-      'dw_news', 'france24', 'propublica', 'un_news', 'noaa_news',
-      'fda_press', 'fda_drugs', 'ema_news', 'reuters_health', 'statnews',
-    ];
+    // Only the 5 fastest, most reliable RSS feeds — guarantees <5s response
+    const FAST_NEWS_IDS = ['ap_news', 'bbc_news', 'guardian_world', 'reuters', 'npr_news'];
+    const fastSources = SOURCES.filter(s => FAST_NEWS_IDS.includes(s.id));
 
-    const prioritySources = SOURCES.filter(s =>
-      s.type === 'news' && PRIORITY_IDS.includes(s.id)
-    );
-
-    const otherSources = SOURCES.filter(s =>
-      s.type === 'news' &&
-      !PRIORITY_IDS.includes(s.id) &&
-      (s.reliability || 0) >= 82
-    );
-
-    // Always fetch all priority sources + a random sample of others
-    const selected = [
-      ...prioritySources,
-      ...shuffle(otherSources).slice(0, 3),
-    ];
-
-    const results = await Promise.allSettled(selected.map(s => fetchFeed(s)));
-
-    const all = results
-      .filter(r => r.status === 'fulfilled')
-      .flatMap(r => r.value);
+    const results = await Promise.allSettled(fastSources.map(s => fetchFeed(s)));
+    const all = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
 
     const seen = new Set();
     const deduped = all.filter(c => {
