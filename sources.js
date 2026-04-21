@@ -656,4 +656,60 @@ const SOURCES_FINAL = [
   { id:'env_health_persp',   name:'Environmental Health Perspectives',domain:'ehp.niehs.nih.gov',     rss:'https://ehp.niehs.nih.gov/action/showFeed?type=etoc&feed=rss&jc=ehp',          category:'environment',  type:'learn', reliability:94 },
 ];
 
-module.exports = [...SOURCES, ...SOURCES_EXTRA, ...SOURCES_FINAL];
+
+// ─── AI & MACHINE LEARNING ──────────────────────────────────────────────────────
+const SOURCES_AI = [
+  { id:'deepmind_blog',    name:'Google DeepMind Blog',                domain:'deepmind.google',       rss:'https://deepmind.google/blog/rss.xml',                                                                   category:'ai', type:'learn', reliability:84 },
+  { id:'the_gradient',     name:'The Gradient',                        domain:'thegradient.pub',       rss:'https://thegradient.pub/rss/',                                                                           category:'ai', type:'learn', reliability:86 },
+  { id:'alignment_forum',  name:'AI Alignment Forum',                  domain:'alignmentforum.org',    rss:'https://www.alignmentforum.org/feed.xml',                                                                category:'ai', type:'learn', reliability:82 },
+  { id:'ai_snake_oil',     name:'AI Snake Oil',                        domain:'aisnakeoil.com',        rss:'https://www.aisnakeoil.com/feed',                                                                        category:'ai', type:'learn', reliability:88 },
+  { id:'arxiv_csai',       name:'arXiv AI',                            domain:'arxiv.org',             rss:'https://rss.arxiv.org/rss/cs.AI',                                                                        category:'ai', type:'learn', reliability:85 },
+  { id:'arxiv_cscl',       name:'arXiv Computation & Language',        domain:'arxiv.org',             rss:'https://rss.arxiv.org/rss/cs.CL',                                                                        category:'ai', type:'learn', reliability:85 },
+  { id:'distill_pub',      name:'Distill.pub',                         domain:'distill.pub',           rss:'https://distill.pub/rss.xml',                                                                            category:'ai', type:'learn', reliability:92 },
+  { id:'import_ai',        name:'Import AI',                           domain:'jack-clark.net',        rss:'https://jack-clark.net/feed/',                                                                           category:'ai', type:'learn', reliability:84 },
+  { id:'ai_now_inst',      name:'AI Now Institute',                    domain:'ainowinstitute.org',    rss:'https://ainowinstitute.org/news/feed',                                                                   category:'ai', type:'news', reliability:86, stance:'Progressive / Critical AI', funding:'Non-profit. Ford Foundation. Critical perspective on AI harms.' },
+  { id:'huggingface_blog', name:'Hugging Face Blog',                   domain:'huggingface.co',        rss:'https://huggingface.co/blog/feed.xml',                                                                   category:'ai', type:'learn', reliability:82 },
+  { id:'the_markup_ai',    name:'The Markup',                          domain:'themarkup.org',         rss:'https://themarkup.org/feeds/rss.xml',                                                                    category:'ai', type:'news', reliability:90, stance:'Investigative / Centre-Left', funding:'Non-profit. Philanthropy-funded data journalism.' },
+];
+
+// ─── CHEMISTRY ──────────────────────────────────────────────────────────────────
+const SOURCES_CHEMISTRY = [
+  { id:'cen_acs',          name:'C&EN (ACS)',                          domain:'cen.acs.org',           rss:'https://cen.acs.org/rss/latest.xml',                                                                      category:'chemistry', type:'learn', reliability:92 },
+  { id:'jacs',             name:'JACS',                                domain:'pubs.acs.org',          rss:'https://pubs.acs.org/action/showFeed?type=axatoc&feed=rss&jc=jacsat',                                     category:'chemistry', type:'learn', reliability:96 },
+  { id:'nat_chem2',        name:'Nature Chemistry',                    domain:'nature.com',            rss:'https://www.nature.com/nchem.rss',                                                                        category:'chemistry', type:'learn', reliability:97 },
+  { id:'chemviews',        name:'ChemistryViews',                      domain:'chemistryviews.org',    rss:'https://www.chemistryviews.org/views/rss/rss.xml',                                                       category:'chemistry', type:'learn', reliability:84 },
+  { id:'chem_world_rss',   name:'Chemistry World',                     domain:'chemistryworld.com',    rss:'https://www.chemistryworld.com/feeds/news',                                                              category:'chemistry', type:'learn', reliability:90 },
+  { id:'green_chem',       name:'Green Chemistry',                     domain:'pubs.rsc.org',          rss:'https://pubs.rsc.org/en/journals/inrecentissues/gc?type=rss',                                            category:'chemistry', type:'learn', reliability:92 },
+  { id:'chem_sci',         name:'Chemical Science (RSC)',              domain:'pubs.rsc.org',          rss:'https://pubs.rsc.org/en/journals/inrecentissues/sc?type=rss',                                            category:'chemistry', type:'learn', reliability:93 },
+  { id:'chem_comm',        name:'Chemical Communications',             domain:'pubs.rsc.org',          rss:'https://pubs.rsc.org/en/journals/inrecentissues/cc?type=rss',                                            category:'chemistry', type:'learn', reliability:92 },
+];
+
+// ─── PHILOSOPHY ─────────────────────────────────────────────────────────────────
+const SOURCES_PHILOSOPHY = [
+  { id:'sep',              name:'Stanford Encyclopedia of Philosophy', domain:'plato.stanford.edu',    rss:'https://plato.stanford.edu/rss/sep.xml',                                                                  category:'philosophy', type:'learn', reliability:96 },
+  { id:'philosophy_now',   name:'Philosophy Now',                      domain:'philosophynow.org',     rss:'https://philosophynow.org/rss.xml',                                                                       category:'philosophy', type:'learn', reliability:84 },
+  { id:'aeon_phil',        name:'Aeon',                                domain:'aeon.co',               rss:'https://aeon.co/feed.rss',                                                                               category:'philosophy', type:'learn', reliability:88 },
+  { id:'ndpr',             name:'Notre Dame Philosophical Reviews',    domain:'ndpr.nd.edu',           rss:'https://ndpr.nd.edu/feed/',                                                                              category:'philosophy', type:'learn', reliability:90 },
+  { id:'philosophy_bites', name:'Philosophy Bites',                    domain:'philosophybites.com',   rss:'https://philosophybites.com/atom.xml',                                                                    category:'philosophy', type:'learn', reliability:84 },
+  { id:'marginalian',      name:'The Marginalian',                     domain:'themarginalian.org',    rss:'https://www.themarginalian.org/feed/',                                                                    category:'philosophy', type:'learn', reliability:84 },
+  { id:'iai_news',         name:'IAI News',                            domain:'iai.tv',                rss:'https://iai.tv/rss',                                                                                     category:'philosophy', type:'learn', reliability:82 },
+  { id:'mind_journal',     name:'Mind Journal (Oxford)',               domain:'academic.oup.com',      rss:'https://academic.oup.com/mind/rss/advance-articles',                                                      category:'philosophy', type:'learn', reliability:93 },
+  { id:'ethics_journal',   name:'Ethics (U. Chicago)',                 domain:'journals.uchicago.edu', rss:'https://www.journals.uchicago.edu/action/showFeed?type=etoc&feed=rss&jc=et',                              category:'philosophy', type:'learn', reliability:93 },
+];
+
+// ─── GEOPOLITICS ────────────────────────────────────────────────────────────────
+const SOURCES_GEOPOLITICS = [
+  { id:'war_on_rocks',     name:'War on the Rocks',                    domain:'warontherocks.com',     rss:'https://warontherocks.com/feed/',                                                                         category:'geopolitics', type:'news', reliability:84, stance:'Realist / US security', funding:'Non-profit. DC national security establishment.' },
+  { id:'iiss',             name:'IISS',                                domain:'iiss.org',              rss:'https://www.iiss.org/rss',                                                                               category:'geopolitics', type:'learn', reliability:88 },
+  { id:'crisis_group',     name:'International Crisis Group',          domain:'crisisgroup.org',       rss:'https://www.crisisgroup.org/rss.xml',                                                                    category:'geopolitics', type:'news', reliability:88, stance:'Neutral / Conflict resolution', funding:'Non-profit. Mix of government and foundation donors.' },
+  { id:'lawfare',          name:'Lawfare',                             domain:'lawfaremedia.org',      rss:'https://www.lawfaremedia.org/feed',                                                                       category:'geopolitics', type:'news', reliability:86, stance:'Centre / National security law', funding:'Non-profit. Foundation grants.' },
+  { id:'just_security',    name:'Just Security',                       domain:'justsecurity.org',      rss:'https://www.justsecurity.org/feed/',                                                                      category:'geopolitics', type:'news', reliability:84, stance:'Centre-Left / International law', funding:'NYU Reiss Center. Non-profit.' },
+  { id:'carnegie_intl',    name:'Carnegie Endowment',                  domain:'carnegieendowment.org', rss:'https://carnegieendowment.org/rss/solr/pubs/?lang=en',                                                    category:'geopolitics', type:'learn', reliability:86 },
+  { id:'atlantic_council', name:'Atlantic Council',                    domain:'atlanticcouncil.org',   rss:'https://www.atlanticcouncil.org/feed/',                                                                   category:'geopolitics', type:'news', reliability:80, stance:'Pro-NATO / Centre-Right', funding:'Government, defence industry and foundation funding.' },
+  { id:'sipri',            name:'SIPRI',                               domain:'sipri.org',             rss:'https://www.sipri.org/rss.xml',                                                                          category:'geopolitics', type:'learn', reliability:92 },
+  { id:'belfer_center',    name:'Belfer Center (Harvard)',             domain:'belfercenter.org',      rss:'https://www.belfercenter.org/rss.xml',                                                                   category:'geopolitics', type:'learn', reliability:88 },
+  { id:'stimson_center',   name:'Stimson Center',                      domain:'stimson.org',           rss:'https://www.stimson.org/feed/',                                                                          category:'geopolitics', type:'learn', reliability:84 },
+  { id:'survival_journal', name:'Survival (IISS)',                     domain:'tandfonline.com',       rss:'https://www.tandfonline.com/feed/rss/tsur20',                                                             category:'geopolitics', type:'learn', reliability:90 },
+];
+
+module.exports = [...SOURCES, ...SOURCES_EXTRA, ...SOURCES_FINAL, ...SOURCES_AI, ...SOURCES_CHEMISTRY, ...SOURCES_PHILOSOPHY, ...SOURCES_GEOPOLITICS];
