@@ -131,16 +131,23 @@ function withImage(item) {
   return item;
 }
 
-// Max 2 per source in final set
+// Hard cap: max 2 articles per source domain in any final result set
 function distributeBySource(items, limit) {
   const bySource = {};
   items.forEach(item => {
-    if (!bySource[item.source]) bySource[item.source] = [];
-    bySource[item.source].push(item);
+    const key = item.source || 'unknown';
+    if (!bySource[key]) bySource[key] = [];
+    bySource[key].push(item);
   });
-  const groups = shuffle(Object.values(bySource).map(a => shuffle(a)));
+
+  // Shuffle within each source group
+  Object.values(bySource).forEach(arr => arr.sort(() => Math.random() - 0.5));
+
+  // Round-robin: one article per source at a time, max 2 rounds
+  const groups = shuffle(Object.values(bySource));
   const result = [];
-  for (let round = 0; round < 3; round++) {
+
+  for (let round = 0; round < 2; round++) {
     for (const arr of groups) {
       if (arr[round]) {
         result.push(arr[round]);
@@ -149,6 +156,16 @@ function distributeBySource(items, limit) {
     }
   }
   return shuffle(result);
+}
+
+// Apply source cap as a standalone filter (used as final pass)
+function capBySource(items, maxPerSource = 2) {
+  const counts = {};
+  return items.filter(item => {
+    const key = item.source || 'unknown';
+    counts[key] = (counts[key] || 0) + 1;
+    return counts[key] <= maxPerSource;
+  });
 }
 
 // ─── RSS Image Extraction ───────────────────────────────────────────────────────
@@ -631,21 +648,21 @@ app.get('/api/feed', async (req, res) => {
         items: shuffle(r.status === 'fulfilled' ? r.value : []).slice(0, 5),
       }));
       const interleaved = [];
-      for (let round = 0; round < 6 && interleaved.length < limit; round++) {
+      for (let round = 0; round < 6 && interleaved.length < limit * 2; round++) {
         for (const pool of shuffle(pools)) {
-          if (pool.items[round]) {
-            interleaved.push(pool.items[round]);
-            if (interleaved.length >= limit) break;
-          }
+          if (pool.items[round]) interleaved.push(pool.items[round]);
         }
       }
-      res.json({ items: dedup(shuffle(interleaved)).slice(0, limit), count: limit, category });
+      // Hard cap: max 2 per source, then shuffle and limit
+      const items = shuffle(capBySource(dedup(shuffle(interleaved)), 2)).slice(0, limit);
+      res.json({ items, count: items.length, category });
 
     } else {
       const fn = CATEGORY_FETCHERS[category];
       if (!fn) return res.status(400).json({ error: 'Unknown: ' + category });
       const raw   = await fn().catch(() => []);
-      const items = distributeBySource(dedup(raw), limit);
+      // Hard cap: max 2 per source
+      const items = distributeBySource(capBySource(dedup(shuffle(raw)), 2), limit);
       res.json({ items, count: items.length, category });
     }
   } catch (e) {
