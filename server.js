@@ -436,120 +436,91 @@ async function fetchRSSByTopic(topic, maxSources = 4) {
 //  85% RECENT (APIs + RSS, last 12 months) / 15% TIMELESS (evergreen RSS)
 //  Applied uniformly to ALL categories
 // ─────────────────────────────────────────────────────────────────────────────
-function split85_15(recentItems, timelessItems, targetTotal) {
-  const nRecent   = Math.round(targetTotal * 0.85);
-  const nTimeless = targetTotal - nRecent;
-  return shuffle(dedup([
-    ...shuffle(recentItems).slice(0, nRecent),
-    ...shuffle(timelessItems).slice(0, nTimeless),
-  ]));
-}
 
 const CATEGORY_FETCHERS = {
 
   'life-sciences': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
         fetchPubMed('biology genetics evolution ecology cell molecular', 'life-sciences', 10),
         fetchPLOS('biology evolution ecology genetics', 'life-sciences', 8),
         fetchRSSByTopic('life-sciences', 2),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'medicine': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
         fetchPubMed('clinical medicine treatment patient outcomes health', 'medicine', 10),
         fetchPLOS('medicine clinical trial treatment', 'medicine', 8),
         fetchRSSByTopic('medicine', 4),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'pharma': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
         fetchPubMed('drug discovery pharmaceutical clinical trial regulatory approval', 'pharma', 10),
         fetchPLOS('pharmacology drug', 'pharma', 6),
         fetchRSSByTopic('pharma', 4),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'ai-tech': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
 
         fetchRSSByTopic('ai-tech', 5),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'physical-sciences': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
 
         fetchPubMed('chemistry physics materials science nanomaterials', 'physical-sciences', 6),
         fetchRSSByTopic('physical-sciences', 4),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'space': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
         fetchNASA(12),
         fetchRSSByTopic('space', 4),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'earth': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
         fetchPubMed('climate change environment ecology biodiversity conservation', 'earth', 8),
         fetchRSSByTopic('earth', 5),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'society': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
         fetchPubMed('psychology cognitive neuroscience social behaviour economics', 'society', 8),
         fetchRSSByTopic('society', 5),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 
   'history': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
-        fetchPubMed('archaeology history ancient civilization historical', 'history', 6),
-        fetchRSSByTopic('history', 5),
-      ]).then(r => r.flat()),
- // more timeless for history is still valid
-    ]);
-    return split85_15(recent, timeless, 30);
+    const items = await Promise.all([
+      fetchPubMed('archaeology history ancient civilization historical', 'history', 6),
+      fetchRSSByTopic('history', 5),
+    ]).then(r => r.flat());
+    return items;
   },
 
   'arts-culture': async () => {
-    const [recent, timeless] = await Promise.all([
-      Promise.all([
+    const items = await Promise.all([
         fetchPubMed('art literature culture humanities philosophy aesthetics', 'arts-culture', 6),
         fetchRSSByTopic('arts-culture', 6),
-      ]).then(r => r.flat()),
-    ]);
-    return split85_15(recent, timeless, 30);
+      ]).then(r => r.flat());
+    return items;
   },
 };
 
