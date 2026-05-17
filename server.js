@@ -230,38 +230,6 @@ async function fetchRSS(id, url, label, domain, topic) {
   }
 }
 
-// ─── Wikipedia ──────────────────────────────────────────────────────────────────
-// Used as 15% timeless layer — genuinely interesting, curated articles
-async function fetchWikipedia(count = 6, topic = 'general') {
-  const key    = `wiki_${topic}_${Math.floor(Date.now() / (10 * 60 * 1000))}`;
-  const cached = getCached(key, 10 * 60 * 1000);
-  if (cached) return cached;
-  try {
-    const r = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=${count}&prop=extracts|pageimages|info&exintro=true&exsentences=3&piprop=thumbnail&pithumbsize=800&inprop=url&format=json&origin=*`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    const data  = await r.json();
-    const items = Object.values(data.query?.pages || {})
-      .filter(p => p.extract && p.extract.length > 80)
-      .map(p => ({
-        id:          'wiki_' + p.pageid,
-        source:      'wikipedia.org',
-        sourceLabel: 'Wikipedia',
-        verified:    true,
-        title:       p.title,
-        excerpt:     strip(p.extract).slice(0, 240) + '…',
-        image:       p.thumbnail ? p.thumbnail.source : pickImage(topic),
-        url:         p.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
-        topic,
-        readTime:    '3 min',
-        type:        'timeless',
-      }));
-    setCache(key, items);
-    return items;
-  } catch (e) { console.warn('[wiki]', e.message); return []; }
-}
-
 // ─── NASA APOD ──────────────────────────────────────────────────────────────────
 async function fetchNASA(count = 10) {
   const cached = getCached('nasa', 60 * 60 * 1000);
@@ -294,49 +262,6 @@ async function fetchNASA(count = 10) {
     setCache('nasa', items);
     return items;
   } catch (e) { console.warn('[nasa]', e.message); return []; }
-}
-
-// ─── arXiv API ─────────────────────────────────────────────────────────────────
-// export.arxiv.org — never blocked, purpose-built for programmatic access
-async function fetchArxiv(query, cacheId, topic, maxResults = 12) {
-  const key    = `arxiv_${cacheId}_${Math.floor(Date.now() / (30 * 60 * 1000))}`;
-  const cached = getCached(key, 30 * 60 * 1000);
-  if (cached) return cached;
-  try {
-    const r = await fetch(
-      `https://export.arxiv.org/api/query?search_query=${encodeURIComponent(query)}&start=0&max_results=${maxResults}&sortBy=submittedDate&sortOrder=descending`,
-      { signal: AbortSignal.timeout(12000) }
-    );
-    const xml     = await r.text();
-    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)];
-    const cutoff  = oneYearAgo();
-    const items   = entries.map((m, i) => {
-      const e        = m[1];
-      const title    = strip((e.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '').replace(/\n/g, ' '));
-      const summary  = strip((e.match(/<summary>([\s\S]*?)<\/summary>/)?.[1] || '').replace(/\n/g, ' '));
-      const link     = (e.match(/<id>([\s\S]*?)<\/id>/)?.[1] || '').replace('http://', 'https://').trim();
-      const published = (e.match(/<published>([\s\S]*?)<\/published>/)?.[1] || '').trim();
-      const authors  = [...e.matchAll(/<name>([\s\S]*?)<\/name>/g)].map(a => a[1].trim()).slice(0, 3).join(', ');
-      if (!title || !link) return null;
-      if (published && new Date(published) < cutoff) return null; // 85% last 12 months enforced
-      return {
-        id:          'arxiv_' + cacheId + '_' + i,
-        source:      'arxiv.org',
-        sourceLabel: 'arXiv',
-        verified:    true,
-        title,
-        excerpt:     (authors ? authors + ' — ' : '') + summary.slice(0, 220) + '…',
-        image:       pickImage(topic),
-        url:         link,
-        topic,
-        readTime:    '5 min',
-        type:        'learn',
-        pubDate:     published,
-      };
-    }).filter(Boolean);
-    setCache(key, items);
-    return items;
-  } catch (e) { console.warn('[arxiv]', cacheId, e.message); return []; }
 }
 
 // ─── PubMed / NCBI E-utilities ─────────────────────────────────────────────────
@@ -481,7 +406,19 @@ const RSS_CONFIRMED = [
   { id:'archaeology',   url:'https://www.archaeology.org/feed',               label:'Archaeology Magazine',domain:'archaeology.org',        topic:'history'          },
   { id:'history_today', url:'https://www.historytoday.com/feed/',             label:'History Today',       domain:'historytoday.com',       topic:'history'          },
   { id:'atlas_obscura', url:'https://www.atlasobscura.com/feeds/latest',      label:'Atlas Obscura',       domain:'atlasobscura.com',       topic:'history'          },
-  { id:'hyperallergic', url:'https://hyperallergic.com/feed/',                label:'Hyperallergic',       domain:'hyperallergic.com',      topic:'arts-culture'     },
+  { id:'marginalian',   url:'https://www.themarginalian.org/feed/',           label:'The Marginalian',       domain:'themarginalian.org',     topic:'arts-culture'     },
+  { id:'nautilus',      url:'https://nautil.us/feed/',                         label:'Nautilus',              domain:'nautil.us',              topic:'physical-sciences'},
+  { id:'works_progress',url:'https://worksinprogress.co/feed/',               label:'Works in Progress',     domain:'worksinprogress.co',     topic:'society'          },
+  { id:'psyche',        url:'https://psyche.co/feed',                          label:'Psyche',                domain:'psyche.co',              topic:'society'          },
+  { id:'astral_codex',  url:'https://astralcodexten.substack.com/feed',       label:'Astral Codex Ten',      domain:'astralcodexten.substack.com', topic:'society'     },
+  { id:'ribbonfarm',    url:'https://www.ribbonfarm.com/feed/',                label:'Ribbonfarm',            domain:'ribbonfarm.com',         topic:'society'          },
+  { id:'lapham',        url:'https://www.laphamsquarterly.org/rss.xml',       label:"Lapham's Quarterly",    domain:'laphamsquarterly.org',   topic:'history'          },
+  { id:'american_scholar', url:'https://theamericanscholar.org/feed/',        label:'The American Scholar',  domain:'theamericanscholar.org', topic:'arts-culture'     },
+  { id:'emergence',     url:'https://emergencemagazine.org/feed/',            label:'Emergence Magazine',    domain:'emergencemagazine.org',  topic:'earth'            },
+  { id:'palladium',     url:'https://palladiummag.com/feed/',                 label:'Palladium Magazine',    domain:'palladiummag.com',       topic:'society'          },
+  { id:'public_books',  url:'https://www.publicbooks.org/feed/',              label:'Public Books',          domain:'publicbooks.org',        topic:'arts-culture'     },
+  { id:'the_point',     url:'https://thepointmag.com/feed/',                  label:'The Point Magazine',    domain:'thepointmag.com',        topic:'arts-culture'     },
+  { id:'roots_progress',url:'https://rootsofprogress.org/feed',              label:'Roots of Progress',     domain:'rootsofprogress.org',    topic:'history'          },
   { id:'lithub',        url:'https://lithub.com/feed/',                       label:'Literary Hub',        domain:'lithub.com',             topic:'arts-culture'     },
   { id:'paris_review',  url:'https://www.theparisreview.org/feed/',           label:'Paris Review',        domain:'theparisreview.org',     topic:'arts-culture'     },
   { id:'aeon',          url:'https://aeon.co/feed.rss',                       label:'Aeon',                domain:'aeon.co',                topic:'arts-culture'     },
@@ -496,7 +433,7 @@ async function fetchRSSByTopic(topic, maxSources = 4) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  85% RECENT (APIs + RSS, last 12 months) / 15% TIMELESS (Wikipedia)
+//  85% RECENT (APIs + RSS, last 12 months) / 15% TIMELESS (evergreen RSS)
 //  Applied uniformly to ALL categories
 // ─────────────────────────────────────────────────────────────────────────────
 function split85_15(recentItems, timelessItems, targetTotal) {
@@ -515,10 +452,8 @@ const CATEGORY_FETCHERS = {
       Promise.all([
         fetchPubMed('biology genetics evolution ecology cell molecular', 'life-sciences', 10),
         fetchPLOS('biology evolution ecology genetics', 'life-sciences', 8),
-        fetchArxiv('cat:q-bio', 'qbio', 'life-sciences', 10),
         fetchRSSByTopic('life-sciences', 2),
       ]).then(r => r.flat()),
-      fetchWikipedia(6, 'life-sciences'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -530,7 +465,6 @@ const CATEGORY_FETCHERS = {
         fetchPLOS('medicine clinical trial treatment', 'medicine', 8),
         fetchRSSByTopic('medicine', 4),
       ]).then(r => r.flat()),
-      fetchWikipedia(5, 'medicine'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -540,10 +474,8 @@ const CATEGORY_FETCHERS = {
       Promise.all([
         fetchPubMed('drug discovery pharmaceutical clinical trial regulatory approval', 'pharma', 10),
         fetchPLOS('pharmacology drug', 'pharma', 6),
-        fetchArxiv('cat:q-bio.BM', 'biomolecules', 'pharma', 8),
         fetchRSSByTopic('pharma', 4),
       ]).then(r => r.flat()),
-      fetchWikipedia(5, 'pharma'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -551,11 +483,9 @@ const CATEGORY_FETCHERS = {
   'ai-tech': async () => {
     const [recent, timeless] = await Promise.all([
       Promise.all([
-        fetchArxiv('cat:cs.AI OR cat:cs.LG OR cat:cs.CL OR cat:cs.CV', 'csai', 'ai-tech', 12),
-        fetchArxiv('cat:cs.SE OR cat:cs.NI OR cat:cs.CR', 'cstech', 'ai-tech', 8),
+
         fetchRSSByTopic('ai-tech', 5),
       ]).then(r => r.flat()),
-      fetchWikipedia(5, 'ai-tech'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -563,12 +493,10 @@ const CATEGORY_FETCHERS = {
   'physical-sciences': async () => {
     const [recent, timeless] = await Promise.all([
       Promise.all([
-        fetchArxiv('cat:physics OR cat:cond-mat OR cat:quant-ph', 'physics', 'physical-sciences', 10),
-        fetchArxiv('cat:chem-ph OR cat:physics.chem-ph', 'chem', 'physical-sciences', 8),
+
         fetchPubMed('chemistry physics materials science nanomaterials', 'physical-sciences', 6),
         fetchRSSByTopic('physical-sciences', 4),
       ]).then(r => r.flat()),
-      fetchWikipedia(5, 'physical-sciences'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -577,10 +505,8 @@ const CATEGORY_FETCHERS = {
     const [recent, timeless] = await Promise.all([
       Promise.all([
         fetchNASA(12),
-        fetchArxiv('cat:astro-ph', 'astrophysics', 'space', 12),
         fetchRSSByTopic('space', 4),
       ]).then(r => r.flat()),
-      fetchWikipedia(5, 'space'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -588,11 +514,9 @@ const CATEGORY_FETCHERS = {
   'earth': async () => {
     const [recent, timeless] = await Promise.all([
       Promise.all([
-        fetchArxiv('cat:physics.ao-ph OR cat:physics.geo-ph', 'geophysics', 'earth', 8),
         fetchPubMed('climate change environment ecology biodiversity conservation', 'earth', 8),
         fetchRSSByTopic('earth', 5),
       ]).then(r => r.flat()),
-      fetchWikipedia(5, 'earth'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -600,11 +524,9 @@ const CATEGORY_FETCHERS = {
   'society': async () => {
     const [recent, timeless] = await Promise.all([
       Promise.all([
-        fetchArxiv('cat:econ OR cat:q-bio.NC', 'econ_neuro', 'society', 10),
         fetchPubMed('psychology cognitive neuroscience social behaviour economics', 'society', 8),
         fetchRSSByTopic('society', 5),
       ]).then(r => r.flat()),
-      fetchWikipedia(5, 'society'),
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -612,11 +534,10 @@ const CATEGORY_FETCHERS = {
   'history': async () => {
     const [recent, timeless] = await Promise.all([
       Promise.all([
-        fetchArxiv('cat:cs.DL ti:history OR ti:archaeology OR ti:ancient', 'hist_dl', 'history', 6),
         fetchPubMed('archaeology history ancient civilization historical', 'history', 6),
         fetchRSSByTopic('history', 5),
       ]).then(r => r.flat()),
-      fetchWikipedia(8, 'history'), // more timeless for history is still valid
+ // more timeless for history is still valid
     ]);
     return split85_15(recent, timeless, 30);
   },
@@ -627,7 +548,6 @@ const CATEGORY_FETCHERS = {
         fetchPubMed('art literature culture humanities philosophy aesthetics', 'arts-culture', 6),
         fetchRSSByTopic('arts-culture', 6),
       ]).then(r => r.flat()),
-      fetchWikipedia(8, 'arts-culture'),
     ]);
     return split85_15(recent, timeless, 30);
   },
