@@ -313,44 +313,6 @@ async function fetchPubMed(query, topic, retmax = 10) {
   } catch (e) { console.warn('[pubmed]', topic, e.message); return []; }
 }
 
-// ─── PLOS API ──────────────────────────────────────────────────────────────────
-async function fetchPLOS(query, topic, rows = 8) {
-  const key    = `plos_${topic}_${Math.floor(Date.now() / (30 * 60 * 1000))}`;
-  const cached = getCached(key, 30 * 60 * 1000);
-  if (cached) return cached;
-  try {
-    const mindate = oneYearAgo().toISOString().slice(0, 10) + 'T00:00:00Z';
-    const r = await fetch(
-      `https://api.plos.org/search?q=${encodeURIComponent(query)}&fl=id,title,abstract,author_display,journal,publication_date&rows=${rows}&sort=publication_date+desc&fq=publication_date:[${mindate}+TO+NOW]&wt=json`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    const data  = await r.json();
-    const docs  = data.response?.docs || [];
-    const items = docs.map(d => {
-      const doi = d.id || '';
-      if (!d.title || !doi) return null;
-      const authors  = (d.author_display || []).slice(0, 3).join(', ');
-      const abstract = Array.isArray(d.abstract) ? d.abstract[0] : (d.abstract || '');
-      return {
-        id:          'plos_' + doi.replace(/\W/g, '_').slice(-14),
-        source:      'plos.org',
-        sourceLabel: 'PLOS ' + (d.journal || 'ONE'),
-        verified:    true,
-        title:       Array.isArray(d.title) ? d.title[0] : d.title,
-        excerpt:     (authors ? authors + ' — ' : '') + strip(abstract).slice(0, 220) + '…',
-        image:       pickImage(topic),
-        url:         'https://doi.org/' + doi,
-        topic,
-        readTime:    '6 min',
-        type:        'learn',
-        pubDate:     d.publication_date || null,
-      };
-    }).filter(Boolean);
-    setCache(key, items);
-    return items;
-  } catch (e) { console.warn('[plos]', topic, e.message); return []; }
-}
-
 // ─── Government RSS (always open — no Cloudflare on .gov / .int) ───────────────
 async function fetchGovRSS(id, url, label, domain, topic) {
   return fetchRSS(id, url, label, domain, topic);
@@ -389,7 +351,6 @@ const RSS_CONFIRMED = [
   { id:'nih',           url:'https://www.nih.gov/research-training/research-matters/rss', label:'NIH',    domain:'nih.gov',                topic:'medicine'         },
   { id:'who',           url:'https://www.who.int/rss-feeds/news-english.xml', label:'WHO',                 domain:'who.int',                topic:'medicine'         },
   { id:'fiercepharma',  url:'https://www.fiercepharma.com/rss/xml',           label:'FiercePharma',        domain:'fiercepharma.com',       topic:'pharma'           },
-  { id:'statnews',      url:'https://www.statnews.com/feed/',                 label:'STAT News',           domain:'statnews.com',           topic:'pharma'           },
   // Society & Geopolitics
   { id:'warontherocks', url:'https://warontherocks.com/feed/',                label:'War on the Rocks',    domain:'warontherocks.com',      topic:'society'          },
   { id:'crisis_group',  url:'https://www.crisisgroup.org/rss.xml',            label:'Crisis Group',        domain:'crisisgroup.org',        topic:'society'          },
@@ -397,7 +358,6 @@ const RSS_CONFIRMED = [
   { id:'cfr',           url:'https://www.cfr.org/rss.xml',                    label:'CFR',                 domain:'cfr.org',                topic:'society'          },
   { id:'bruegel',       url:'https://www.bruegel.org/feed',                   label:'Bruegel',             domain:'bruegel.org',            topic:'society'          },
   { id:'voxeu',         url:'https://voxeu.org/feed',                         label:'VoxEU',               domain:'voxeu.org',              topic:'society'          },
-  { id:'owid',          url:'https://ourworldindata.org/atom.xml',            label:'Our World in Data',   domain:'ourworldindata.org',     topic:'society'          },
   { id:'imf_blog',      url:'https://www.imf.org/en/Blogs/rss',               label:'IMF Blog',            domain:'imf.org',                topic:'society'          },
   { id:'bps',           url:'https://digest.bps.org.uk/feed/',                label:'BPS Research Digest', domain:'bps.org.uk',             topic:'society'          },
   { id:'neuro_news',    url:'https://neurosciencenews.com/feed/',             label:'Neuroscience News',   domain:'neurosciencenews.com',   topic:'society'          },
@@ -442,7 +402,6 @@ const CATEGORY_FETCHERS = {
   'life-sciences': async () => {
     const items = await Promise.all([
         fetchPubMed('biology genetics evolution ecology cell molecular', 'life-sciences', 10),
-        fetchPLOS('biology evolution ecology genetics', 'life-sciences', 8),
         fetchRSSByTopic('life-sciences', 2),
       ]).then(r => r.flat());
     return items;
@@ -451,7 +410,6 @@ const CATEGORY_FETCHERS = {
   'medicine': async () => {
     const items = await Promise.all([
         fetchPubMed('clinical medicine treatment patient outcomes health', 'medicine', 10),
-        fetchPLOS('medicine clinical trial treatment', 'medicine', 8),
         fetchRSSByTopic('medicine', 4),
       ]).then(r => r.flat());
     return items;
@@ -460,7 +418,6 @@ const CATEGORY_FETCHERS = {
   'pharma': async () => {
     const items = await Promise.all([
         fetchPubMed('drug discovery pharmaceutical clinical trial regulatory approval', 'pharma', 10),
-        fetchPLOS('pharmacology drug', 'pharma', 6),
         fetchRSSByTopic('pharma', 4),
       ]).then(r => r.flat());
     return items;
@@ -528,7 +485,7 @@ const CATEGORY_FETCHERS = {
 app.get('/api/feed', async (req, res) => {
   try {
     const category = req.query.category || 'all';
-    const limit    = Math.min(parseInt(req.query.limit) || 50, 100);
+    const limit    = Math.min(parseInt(req.query.limit) || 30, 60);
 
     if (category === 'all') {
       const entries = Object.entries(CATEGORY_FETCHERS);
@@ -545,7 +502,7 @@ app.get('/api/feed', async (req, res) => {
         }
       }
       // Hard cap: max 2 per source, then shuffle and limit
-      const items = shuffle(capBySource(dedup(shuffle(interleaved)), 2)).slice(0, limit);
+      const items = shuffle(capBySource(dedup(shuffle(interleaved)), 1)).slice(0, limit);
       res.json({ items, count: items.length, category });
 
     } else {
@@ -553,7 +510,7 @@ app.get('/api/feed', async (req, res) => {
       if (!fn) return res.status(400).json({ error: 'Unknown: ' + category });
       const raw   = await fn().catch(() => []);
       // Hard cap: max 2 per source
-      const items = distributeBySource(capBySource(dedup(shuffle(raw)), 2), limit);
+      const items = distributeBySource(capBySource(dedup(shuffle(raw)), 1), limit);
       res.json({ items, count: items.length, category });
     }
   } catch (e) {
