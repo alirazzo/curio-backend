@@ -41,14 +41,14 @@ function setCache(key, data) {
 const imagePool = new Map();
 
 const PIXABAY_QUERIES = {
-  'life-sciences':     'biology cell microscope dna genetics',
+  'life-sciences-pharma': 'biology cell microscope dna genetics pharmaceutical laboratory',
   'medicine':          'medical doctor hospital healthcare research',
-  'pharma':            'pharmaceutical laboratory scientist drug research',
+  
   'ai-tech':           'artificial intelligence technology computer circuit',
   'physical-sciences': 'physics chemistry laboratory molecules science',
   'space':             'galaxy nebula cosmos stars astronomy',
   'earth':             'earth landscape environment nature aerial',
-  'society':           'city society people economics global',
+  'society-economics': 'city society people economics global',
   'history':           'ancient history ruins civilization archaeology',
   'arts-culture':      'art museum painting books culture library',
 };
@@ -347,20 +347,20 @@ const RSS_CONFIRMED = [
   { id:'mongabay',      url:'https://news.mongabay.com/feed/',                label:'Mongabay',            domain:'mongabay.com',           topic:'earth'            },
   { id:'inside_climate',url:'https://insideclimatenews.org/feed/',            label:'Inside Climate News', domain:'insideclimatenews.org',  topic:'earth'            },
   // Pharma — .gov never blocks
-  { id:'fda',           url:'https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml', label:'FDA',  domain:'fda.gov', topic:'pharma' },
+  { id:'fda',           url:'https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml', label:'FDA',  domain:'fda.gov', topic:'life-sciences-pharma' },
   { id:'nih',           url:'https://www.nih.gov/research-training/research-matters/rss', label:'NIH',    domain:'nih.gov',                topic:'medicine'         },
   { id:'who',           url:'https://www.who.int/rss-feeds/news-english.xml', label:'WHO',                 domain:'who.int',                topic:'medicine'         },
-  { id:'fiercepharma',  url:'https://www.fiercepharma.com/rss/xml',           label:'FiercePharma',        domain:'fiercepharma.com',       topic:'pharma'           },
+  { id:'fiercepharma',  url:'https://www.fiercepharma.com/rss/xml',           label:'FiercePharma',        domain:'fiercepharma.com',       topic:'life-sciences-pharma'           },
   // Society & Geopolitics
-  { id:'warontherocks', url:'https://warontherocks.com/feed/',                label:'War on the Rocks',    domain:'warontherocks.com',      topic:'society'          },
-  { id:'crisis_group',  url:'https://www.crisisgroup.org/rss.xml',            label:'Crisis Group',        domain:'crisisgroup.org',        topic:'society'          },
-  { id:'lawfare',       url:'https://www.lawfaremedia.org/feed',              label:'Lawfare',             domain:'lawfaremedia.org',       topic:'society'          },
-  { id:'cfr',           url:'https://www.cfr.org/rss.xml',                    label:'CFR',                 domain:'cfr.org',                topic:'society'          },
-  { id:'bruegel',       url:'https://www.bruegel.org/feed',                   label:'Bruegel',             domain:'bruegel.org',            topic:'society'          },
-  { id:'voxeu',         url:'https://voxeu.org/feed',                         label:'VoxEU',               domain:'voxeu.org',              topic:'society'          },
-  { id:'imf_blog',      url:'https://www.imf.org/en/Blogs/rss',               label:'IMF Blog',            domain:'imf.org',                topic:'society'          },
-  { id:'bps',           url:'https://digest.bps.org.uk/feed/',                label:'BPS Research Digest', domain:'bps.org.uk',             topic:'society'          },
-  { id:'neuro_news',    url:'https://neurosciencenews.com/feed/',             label:'Neuroscience News',   domain:'neurosciencenews.com',   topic:'society'          },
+  { id:'warontherocks', url:'https://warontherocks.com/feed/',                label:'War on the Rocks',    domain:'warontherocks.com',      topic:'society-economics'          },
+  { id:'crisis_group',  url:'https://www.crisisgroup.org/rss.xml',            label:'Crisis Group',        domain:'crisisgroup.org',        topic:'society-economics'          },
+  { id:'lawfare',       url:'https://www.lawfaremedia.org/feed',              label:'Lawfare',             domain:'lawfaremedia.org',       topic:'society-economics'          },
+  { id:'cfr',           url:'https://www.cfr.org/rss.xml',                    label:'CFR',                 domain:'cfr.org',                topic:'society-economics'          },
+  { id:'bruegel',       url:'https://www.bruegel.org/feed',                   label:'Bruegel',             domain:'bruegel.org',            topic:'society-economics'          },
+  { id:'voxeu',         url:'https://voxeu.org/feed',                         label:'VoxEU',               domain:'voxeu.org',              topic:'society-economics'          },
+  { id:'imf_blog',      url:'https://www.imf.org/en/Blogs/rss',               label:'IMF Blog',            domain:'imf.org',                topic:'society-economics'          },
+  { id:'bps',           url:'https://digest.bps.org.uk/feed/',                label:'BPS Research Digest', domain:'bps.org.uk',             topic:'society-economics'          },
+  { id:'neuro_news',    url:'https://neurosciencenews.com/feed/',             label:'Neuroscience News',   domain:'neurosciencenews.com',   topic:'society-economics'          },
   // History & Arts — small sites, no Cloudflare
   { id:'smithsonian_h', url:'https://www.smithsonianmag.com/rss/history-archaeology/', label:'Smithsonian History', domain:'smithsonianmag.com', topic:'history' },
   { id:'archaeology',   url:'https://www.archaeology.org/feed',               label:'Archaeology Magazine',domain:'archaeology.org',        topic:'history'          },
@@ -368,14 +368,14 @@ const RSS_CONFIRMED = [
   { id:'atlas_obscura', url:'https://www.atlasobscura.com/feeds/latest',      label:'Atlas Obscura',       domain:'atlasobscura.com',       topic:'history'          },
   { id:'marginalian',   url:'https://www.themarginalian.org/feed/',           label:'The Marginalian',       domain:'themarginalian.org',     topic:'arts-culture'     },
   { id:'nautilus',      url:'https://nautil.us/feed/',                         label:'Nautilus',              domain:'nautil.us',              topic:'physical-sciences'},
-  { id:'works_progress',url:'https://worksinprogress.co/feed/',               label:'Works in Progress',     domain:'worksinprogress.co',     topic:'society'          },
-  { id:'psyche',        url:'https://psyche.co/feed',                          label:'Psyche',                domain:'psyche.co',              topic:'society'          },
-  { id:'astral_codex',  url:'https://astralcodexten.substack.com/feed',       label:'Astral Codex Ten',      domain:'astralcodexten.substack.com', topic:'society'     },
-  { id:'ribbonfarm',    url:'https://www.ribbonfarm.com/feed/',                label:'Ribbonfarm',            domain:'ribbonfarm.com',         topic:'society'          },
+  { id:'works_progress',url:'https://worksinprogress.co/feed/',               label:'Works in Progress',     domain:'worksinprogress.co',     topic:'society-economics'          },
+  { id:'psyche',        url:'https://psyche.co/feed',                          label:'Psyche',                domain:'psyche.co',              topic:'society-economics'          },
+  { id:'astral_codex',  url:'https://astralcodexten.substack.com/feed',       label:'Astral Codex Ten',      domain:'astralcodexten.substack.com', topic:'society-economics'     },
+  { id:'ribbonfarm',    url:'https://www.ribbonfarm.com/feed/',                label:'Ribbonfarm',            domain:'ribbonfarm.com',         topic:'society-economics'          },
   { id:'lapham',        url:'https://www.laphamsquarterly.org/rss.xml',       label:"Lapham's Quarterly",    domain:'laphamsquarterly.org',   topic:'history'          },
   { id:'american_scholar', url:'https://theamericanscholar.org/feed/',        label:'The American Scholar',  domain:'theamericanscholar.org', topic:'arts-culture'     },
   { id:'emergence',     url:'https://emergencemagazine.org/feed/',            label:'Emergence Magazine',    domain:'emergencemagazine.org',  topic:'earth'            },
-  { id:'palladium',     url:'https://palladiummag.com/feed/',                 label:'Palladium Magazine',    domain:'palladiummag.com',       topic:'society'          },
+  { id:'palladium',     url:'https://palladiummag.com/feed/',                 label:'Palladium Magazine',    domain:'palladiummag.com',       topic:'society-economics'          },
   { id:'public_books',  url:'https://www.publicbooks.org/feed/',              label:'Public Books',          domain:'publicbooks.org',        topic:'arts-culture'     },
   { id:'the_point',     url:'https://thepointmag.com/feed/',                  label:'The Point Magazine',    domain:'thepointmag.com',        topic:'arts-culture'     },
   { id:'lithub',        url:'https://lithub.com/feed/',                       label:'Literary Hub',        domain:'lithub.com',             topic:'arts-culture'     },
@@ -384,12 +384,12 @@ const RSS_CONFIRMED = [
   { id:'iai',           url:'https://iai.tv/rss',                             label:'IAI News',            domain:'iai.tv',                 topic:'arts-culture'     },
   { id:'conversation_arts', url:'https://theconversation.com/arts/rss.xml',  label:'The Conversation Arts', domain:'theconversation.com',  topic:'arts-culture'     },
   // Unbiased analysis — institutional, academic, data-driven
-  { id:'pew',           url:'https://www.pewresearch.org/feed/',                    label:'Pew Research Center',   domain:'pewresearch.org',        topic:'society'           },
-  { id:'carnegie',      url:'https://carnegieendowment.org/rss/solr/pubs/?lang=en', label:'Carnegie Endowment',    domain:'carnegieendowment.org',  topic:'society'           },
-  { id:'chatham',       url:'https://www.chathamhouse.org/feeds/all',               label:'Chatham House',         domain:'chathamhouse.org',       topic:'society'           },
-  { id:'wilson_ctr',    url:'https://www.wilsoncenter.org/rss.xml',                 label:'Wilson Center',         domain:'wilsoncenter.org',       topic:'society'           },
-  { id:'sipri',         url:'https://www.sipri.org/rss.xml',                        label:'SIPRI',                 domain:'sipri.org',              topic:'society'           },
-  { id:'rand',          url:'https://www.rand.org/pubs/rss/latest.xml',             label:'RAND Corporation',      domain:'rand.org',               topic:'society'           },
+  { id:'pew',           url:'https://www.pewresearch.org/feed/',                    label:'Pew Research Center',   domain:'pewresearch.org',        topic:'society-economics'           },
+  { id:'carnegie',      url:'https://carnegieendowment.org/rss/solr/pubs/?lang=en', label:'Carnegie Endowment',    domain:'carnegieendowment.org',  topic:'society-economics'           },
+  { id:'chatham',       url:'https://www.chathamhouse.org/feeds/all',               label:'Chatham House',         domain:'chathamhouse.org',       topic:'society-economics'           },
+  { id:'wilson_ctr',    url:'https://www.wilsoncenter.org/rss.xml',                 label:'Wilson Center',         domain:'wilsoncenter.org',       topic:'society-economics'           },
+  { id:'sipri',         url:'https://www.sipri.org/rss.xml',                        label:'SIPRI',                 domain:'sipri.org',              topic:'society-economics'           },
+  { id:'rand',          url:'https://www.rand.org/pubs/rss/latest.xml',             label:'RAND Corporation',      domain:'rand.org',               topic:'society-economics'           },
   { id:'knowable',      url:'https://knowablemagazine.org/feed',                    label:'Knowable Magazine',     domain:'knowablemagazine.org',   topic:'physical-sciences' },
   { id:'jstor_daily',   url:'https://daily.jstor.org/feed/',                        label:'JSTOR Daily',           domain:'daily.jstor.org',        topic:'history'           },
   { id:'yale_e360',     url:'https://e360.yale.edu/feed',                           label:'Yale Environment 360',  domain:'e360.yale.edu',          topic:'earth'             },
@@ -412,11 +412,11 @@ async function fetchRSSByTopic(topic, maxSources = 4) {
 
 const CATEGORY_FETCHERS = {
 
-  'life-sciences': async () => {
+    'life-sciences-pharma': async () => {
     const items = await Promise.all([
-        fetchPubMed('biology genetics evolution ecology cell molecular', 'life-sciences', 10),
-        fetchRSSByTopic('life-sciences', 2),
-      ]).then(r => r.flat());
+        fetchPubMed('biology genetics evolution ecology cell molecular microbiology drug discovery pharmaceutical clinical trial', 'life-sciences-pharma', 14),
+        fetchRSSByTopic('life-sciences-pharma', 5),
+    ]).then(r => r.flat());
     return items;
   },
 
@@ -424,14 +424,6 @@ const CATEGORY_FETCHERS = {
     const items = await Promise.all([
         fetchPubMed('clinical medicine treatment patient outcomes health', 'medicine', 10),
         fetchRSSByTopic('medicine', 4),
-      ]).then(r => r.flat());
-    return items;
-  },
-
-  'pharma': async () => {
-    const items = await Promise.all([
-        fetchPubMed('drug discovery pharmaceutical clinical trial regulatory approval', 'pharma', 10),
-        fetchRSSByTopic('pharma', 4),
       ]).then(r => r.flat());
     return items;
   },
@@ -469,10 +461,10 @@ const CATEGORY_FETCHERS = {
     return items;
   },
 
-  'society': async () => {
+  'society-economics': async () => {
     const items = await Promise.all([
-        fetchPubMed('psychology cognitive neuroscience social behaviour economics', 'society', 8),
-        fetchRSSByTopic('society', 6),
+        fetchPubMed('psychology cognitive neuroscience social behaviour economics', 'society-economics', 8),
+        fetchRSSByTopic('society-economics', 6),
       ]).then(r => r.flat());
     return items;
   },
