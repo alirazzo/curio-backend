@@ -378,12 +378,25 @@ const RSS_CONFIRMED = [
   { id:'palladium',     url:'https://palladiummag.com/feed/',                 label:'Palladium Magazine',    domain:'palladiummag.com',       topic:'society'          },
   { id:'public_books',  url:'https://www.publicbooks.org/feed/',              label:'Public Books',          domain:'publicbooks.org',        topic:'arts-culture'     },
   { id:'the_point',     url:'https://thepointmag.com/feed/',                  label:'The Point Magazine',    domain:'thepointmag.com',        topic:'arts-culture'     },
-  { id:'roots_progress',url:'https://rootsofprogress.org/feed',              label:'Roots of Progress',     domain:'rootsofprogress.org',    topic:'history'          },
   { id:'lithub',        url:'https://lithub.com/feed/',                       label:'Literary Hub',        domain:'lithub.com',             topic:'arts-culture'     },
   { id:'paris_review',  url:'https://www.theparisreview.org/feed/',           label:'Paris Review',        domain:'theparisreview.org',     topic:'arts-culture'     },
   { id:'aeon',          url:'https://aeon.co/feed.rss',                       label:'Aeon',                domain:'aeon.co',                topic:'arts-culture'     },
   { id:'iai',           url:'https://iai.tv/rss',                             label:'IAI News',            domain:'iai.tv',                 topic:'arts-culture'     },
   { id:'conversation_arts', url:'https://theconversation.com/arts/rss.xml',  label:'The Conversation Arts', domain:'theconversation.com',  topic:'arts-culture'     },
+  // Unbiased analysis — institutional, academic, data-driven
+  { id:'pew',           url:'https://www.pewresearch.org/feed/',                    label:'Pew Research Center',   domain:'pewresearch.org',        topic:'society'           },
+  { id:'carnegie',      url:'https://carnegieendowment.org/rss/solr/pubs/?lang=en', label:'Carnegie Endowment',    domain:'carnegieendowment.org',  topic:'society'           },
+  { id:'chatham',       url:'https://www.chathamhouse.org/feeds/all',               label:'Chatham House',         domain:'chathamhouse.org',       topic:'society'           },
+  { id:'wilson_ctr',    url:'https://www.wilsoncenter.org/rss.xml',                 label:'Wilson Center',         domain:'wilsoncenter.org',       topic:'society'           },
+  { id:'sipri',         url:'https://www.sipri.org/rss.xml',                        label:'SIPRI',                 domain:'sipri.org',              topic:'society'           },
+  { id:'rand',          url:'https://www.rand.org/pubs/rss/latest.xml',             label:'RAND Corporation',      domain:'rand.org',               topic:'society'           },
+  { id:'knowable',      url:'https://knowablemagazine.org/feed',                    label:'Knowable Magazine',     domain:'knowablemagazine.org',   topic:'physical-sciences' },
+  { id:'jstor_daily',   url:'https://daily.jstor.org/feed/',                        label:'JSTOR Daily',           domain:'daily.jstor.org',        topic:'history'           },
+  { id:'yale_e360',     url:'https://e360.yale.edu/feed',                           label:'Yale Environment 360',  domain:'e360.yale.edu',          topic:'earth'             },
+  { id:'acm_tech',      url:'https://technews.acm.org/rss.xml',                     label:'ACM TechNews',          domain:'technews.acm.org',       topic:'ai-tech'           },
+  { id:'ieee_spectrum', url:'https://spectrum.ieee.org/feeds/feed.rss',             label:'IEEE Spectrum',         domain:'spectrum.ieee.org',      topic:'ai-tech'           },
+  { id:'pub_seminar',   url:'https://publicseminar.org/feed/',                      label:'Public Seminar',        domain:'publicseminar.org',      topic:'arts-culture'      },
+  { id:'plough',        url:'https://www.plough.com/en/feed',                       label:'Plough Quarterly',      domain:'plough.com',             topic:'arts-culture'      },
 ];
 
 async function fetchRSSByTopic(topic, maxSources = 4) {
@@ -459,7 +472,7 @@ const CATEGORY_FETCHERS = {
   'society': async () => {
     const items = await Promise.all([
         fetchPubMed('psychology cognitive neuroscience social behaviour economics', 'society', 8),
-        fetchRSSByTopic('society', 5),
+        fetchRSSByTopic('society', 6),
       ]).then(r => r.flat());
     return items;
   },
