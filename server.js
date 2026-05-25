@@ -255,6 +255,7 @@ async function fetchNASA(count = 10) {
         image:       d.url,
         url:         `https://apod.nasa.gov/apod/ap${(d.date || '').replace(/-/g, '').slice(2)}.html`,
         topic:       'space',
+        lang:        'en',
         readTime:    readTime(d.explanation),
         type:        'learn',
         pubDate:     d.date,
@@ -303,6 +304,7 @@ async function fetchPubMed(query, topic, retmax = 10) {
         image:       pickImage(topic),
         url:         'https://pubmed.ncbi.nlm.nih.gov/' + uid + '/',
         topic,
+        lang:        'en',
         readTime:    '6 min',
         type:        'learn',
         pubDate:     rec.pubdate || null,
@@ -344,7 +346,6 @@ const RSS_CONFIRMED = [
   { id:'noaa',          url:'https://www.noaa.gov/news-release/rss.xml',      label:'NOAA',                domain:'noaa.gov',               topic:'earth', lang:'en' },
   { id:'usgs',          url:'https://www.usgs.gov/news/technical-announcement/rss.xml', label:'USGS',     domain:'usgs.gov',               topic:'earth', lang:'en' },
   { id:'carbonbrief',   url:'https://www.carbonbrief.org/feed',               label:'Carbon Brief',        domain:'carbonbrief.org',        topic:'earth', lang:'en' },
-  { id:'mongabay',      url:'https://news.mongabay.com/feed/',                label:'Mongabay',            domain:'mongabay.com',           topic:'earth', lang:'en' },
   { id:'inside_climate',url:'https://insideclimatenews.org/feed/',            label:'Inside Climate News', domain:'insideclimatenews.org',  topic:'earth', lang:'en' },
   // Pharma — .gov never blocks
   { id:'fda',           url:'https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml', label:'FDA',  domain:'fda.gov', topic:'life-sciences-pharma', lang:'en' },
@@ -401,7 +402,7 @@ const RSS_CONFIRMED = [
   // ── FRENCH SOURCES ──────────────────────────────────────────────────────
   { id:'fr_monde_dip',   url:'https://www.monde-diplomatique.fr/recents.atom',             label:'Le Monde Diplomatique', domain:'monde-diplomatique.fr',   topic:'society-economics',  lang:'fr' },
   { id:'fr_ifri',        url:'https://www.ifri.org/fr/rss.xml',                            label:'IFRI',                  domain:'ifri.org',                topic:'society-economics',  lang:'fr' },
-  { id:'fr_orient_xxi',  url:'https://orientxxi.info/spip.php?page=backend',               label:'Orient XXI',            domain:'orientxxi.info',          topic:'society-economics',  lang:'fr' },
+  { id:'fr_orient_xxi',  url:'https://orientxxi.info/spip.php?page=backend',               label:'Orient XXI',            domain:'orientxxi.info',          topic:'history',  lang:'fr' },
   { id:'fr_the_conv',    url:'https://theconversation.com/fr/articles.atom',               label:'The Conversation FR',   domain:'theconversation.com',     topic:'physical-sciences',  lang:'fr' },
   { id:'fr_slate',       url:'https://www.slate.fr/rss.xml',                               label:'Slate.fr',              domain:'slate.fr',                topic:'society-economics',  lang:'fr' },
   { id:'fr_aoc',         url:'https://aoc.media/feed',                                     label:'AOC Media',             domain:'aoc.media',               topic:'arts-culture',       lang:'fr' },
@@ -418,6 +419,14 @@ const RSS_CONFIRMED = [
   { id:'ar_jumhuriya',   url:'https://aljumhuriya.net/ar/feed',                            label:'الجمهورية',             domain:'aljumhuriya.net',         topic:'arts-culture',       lang:'ar' },
   { id:'ar_jadaliyya',   url:'https://www.jadaliyya.com/api/RSS',                          label:'جدلية',                 domain:'jadaliyya.com',           topic:'history',            lang:'ar' },
   { id:'ar_7iber',       url:'https://www.7iber.com/feed/',                                label:'حبر',                   domain:'7iber.com',               topic:'society-economics',  lang:'ar' },
+  // Additional French — government/research institutions (never blocked)
+  { id:'fr_cnrs',       url:'https://www.cnrs.fr/fr/feed/actualites',          label:'CNRS',                    domain:'cnrs.fr',                   topic:'physical-sciences', lang:'fr' },
+  { id:'fr_inserm',     url:'https://presse.inserm.fr/feed/',                  label:'INSERM',                  domain:'inserm.fr',                  topic:'medicine',          lang:'fr' },
+  { id:'fr_inrae',      url:'https://www.inrae.fr/actualites/rss.xml',         label:'INRAE',                   domain:'inrae.fr',                   topic:'earth',             lang:'fr' },
+  { id:'fr_vie_idees',  url:'https://www.laviedesidees.fr/spip.php?page=backend', label:'La Vie des Idées',     domain:'laviedesidees.fr',           topic:'history',      lang:'fr' },
+  { id:'fr_contretemps',url:'https://www.contretemps.eu/feed/',                label:'Contretemps',             domain:'contretemps.eu',             topic:'society-economics', lang:'fr' },
+  // Additional Arabic — small independent outlets (no Cloudflare)
+  { id:'ar_madar',      url:'https://www.madarcenter.org/feed/',               label:'مدار',                    domain:'madarcenter.org',             topic:'society-economics', lang:'ar' },
 ];
 
 async function fetchRSSByTopic(topic, maxSources = 4, lang = 'all') {
@@ -514,7 +523,7 @@ app.get('/api/feed', async (req, res) => {
   try {
     const category = req.query.category || 'all';
     const lang     = req.query.lang     || 'all';
-    const limit    = Math.min(parseInt(req.query.limit) || 30, 60);
+    const limit    = Math.min(parseInt(req.query.limit) || 80, 120);
 
     // Non-English: only pull matching language RSS sources
     if (lang !== 'all' && lang !== 'en') {
@@ -536,7 +545,7 @@ app.get('/api/feed', async (req, res) => {
       const results = await Promise.allSettled(entries.map(([, fn]) => fn().catch(() => [])));
       const pools   = results.map((r, i) => ({
         cat:   entries[i][0],
-        items: shuffle(r.status === 'fulfilled' ? r.value : []).slice(0, 5),
+        items: shuffle(r.status === 'fulfilled' ? r.value : []).slice(0, 8),
       }));
       const interleaved = [];
       for (let round = 0; round < 6 && interleaved.length < limit * 2; round++) {
